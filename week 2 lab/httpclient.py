@@ -16,7 +16,8 @@ get_ip_address(website)
 # 2. Trace Route
 def tracert(domain):
     try:
-        result = subprocess.run(["tracert", domain], capture_output=True, text=True)
+        command = ["tracert", domain] if subprocess.os.name == "nt" else ["traceroute", domain]
+        result = subprocess.run(command, capture_output=True, text=True)
         print(result.stdout)
     except FileNotFoundError:
         print("tracert command not found. Make sure it's available.")
@@ -28,16 +29,24 @@ tracert(domain)
 
 # 3. Simple HTTP Client
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('www.example.com', 80)
+server_address = ('www.youtube.com', 80)
 client_socket.connect(server_address)
-request = "GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n"
-client_socket.send(request.encode())
-response = client_socket.recv(4096)
+request = "GET / HTTP/1.1\r\nHost: www.youtube.com\r\n\r\n"
+response = b""
+while True:
+    part = client_socket.recv(4096)
+    if not part:
+        break
+try:
+    response = requests.get('http://www.youtube.com', timeout=10)
+    print(response.text)
+except requests.exceptions.RequestException as e:
+    print(f"Failed to fetch YouTube page: {e}")
 print(response.decode())
 client_socket.close()
 
 # 4. Simple HTTP Client using requests
-response = requests.get('http://www.example.com')
+response = requests.get('http://www.youtube.com')
 print(response.text)
 
 # 5. HTTP Requests Types

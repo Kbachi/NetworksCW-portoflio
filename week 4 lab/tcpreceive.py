@@ -19,7 +19,7 @@ def tcp_server():
                 if not data:
                     break
                 f.write(data)
-        print("File received and saved as 'received_file.txt'!")
+        print("File received and saved as 'received_file.txt")
         
         client_socket.close()
 
@@ -42,5 +42,5 @@ def tcp_client():
     
     client_socket.close()
 
-# Example usage
+
 tcp_client()

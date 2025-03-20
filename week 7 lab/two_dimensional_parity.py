@@ -1,6 +1,6 @@
 import random
 
-# Function to compute 2D parity
+# compute 2D parity
 def compute_parity(matrix):
     row_parity = [sum(row) % 2 for row in matrix]
     col_parity = [sum(col) % 2 for col in zip(*matrix)]
@@ -37,7 +37,7 @@ new_row_parity, new_col_parity = compute_parity(data_with_error)
 print("New Row Parity:", new_row_parity)
 print("New Column Parity:", new_col_parity)
 
-# Detect and correct the error
+# correct the error
 err_row = [i for i in range(len(row_parity)) if new_row_parity[i] != row_parity[i]]
 err_col = [j for j in range(len(col_parity)) if new_col_parity[j] != col_parity[j]]
 

@@ -18,7 +18,7 @@ def send_discover():
 
 def make_offer(discover):
     print("\n[SERVER] Sending DHCP OFFER")
-    if not dhcp_server["ip_pool"]:
+    if len(dhcp_server["ip_pool"]) == 0:  
         print("No IP addresses available!")
         return None
     offered_ip = dhcp_server["ip_pool"].pop(0)
@@ -39,7 +39,7 @@ def main():
     # Client initiates DHCP process
     discover = send_discover()
     offer = make_offer(discover)
-    if not offer:
+    if offer == None:  
         return
     
     request = send_request(offer)
@@ -49,7 +49,7 @@ def main():
     dhcp_client["ip"] = ack["ip"]
     
     print("\n=== DHCP Lease Result ===")
-    print(f"Client {dhcp_client['mac']} obtained IP: {dhcp_client['ip']}")
+    print("Client " + dhcp_client['mac'] + " obtained IP: " + dhcp_client['ip'])  
     print("Current Server Leases:", dhcp_server["leases"])
 
 if __name__ == "__main__":

@@ -1,52 +1,44 @@
 import socket
 import requests
+import threading
 
 # Function to fetch weather data from Open-Meteo API
 def fetch_weather_data():
-    api_url = "https://api.open-meteo.com/v1/forecast?latitude=51.4742&longitude=-0.0355&current_weather=true"  # Goldsmiths University
-    
-    response = requests.get(api_url)
-    
-    if response.status_code == 200:
-        weather_data = response.json().get("current_weather", {})
-        temperature = weather_data.get("temperature", "N/A")
-        wind_speed = weather_data.get("windspeed", "N/A")
-        condition = weather_data.get("weathercode", "N/A")
-        
-        message = f"Goldsmiths University - Temp: {temperature}°C, Wind Speed: {wind_speed} km/h, Condition Code: {condition}"
-    else:
-        message = "Failed to fetch weather data"
-    
-    return message
+    try:
+        response = requests.get("https://api.open-meteo.com/v1/forecast?latitude=51.4742&longitude=-0.0355&current_weather=true")
+        if response.status_code == 200:
+            data = response.json()
+            weather_data = data["current_weather"] if "current_weather" in data else {}
+            temperature = weather_data["temperature"] if "temperature" in weather_data else "N/A"
+            wind_speed = weather_data["windspeed"] if "windspeed" in weather_data else "N/A"
+            condition = weather_data["weathercode"] if "weathercode" in weather_data else "N/A"
+            return f"Goldsmiths University - Temp: {temperature}°C, Wind Speed: {wind_speed} km/h, Condition Code: {condition}"
+        else:
+            return "Failed to fetch weather data"
+    except:
+        return "Error occurred while fetching weather data"
 
 # TCP Server - Handles incoming weather data requests
 def tcp_server():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('localhost', 65436))
-    server_socket.listen(5)
-    print("Weather API TCP Server is running...")
-    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('localhost', 65436))
+    s.listen(5)
+    print("Server running...")
     while True:
-        client_socket, client_address = server_socket.accept()
-        print(f"Connected to {client_address}")
-        weather_info = fetch_weather_data()
-        client_socket.sendall(weather_info.encode())
-        client_socket.close()
+        c, addr = s.accept()
+        print(f"Connected to {addr}")
+        c.send(fetch_weather_data().encode())
+        c.close()
 
 # Run server in a separate thread
-import threading
-server_thread = threading.Thread(target=tcp_server, daemon=True)
-server_thread.start()
+threading.Thread(target=tcp_server, daemon=True).start()
 
 # TCP Client - Requests weather data
 def tcp_client():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('localhost', 65436))
-    
-    weather_info = client_socket.recv(1024).decode()
-    print(f"Received Weather Info: {weather_info}")
-    
-    client_socket.close()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('localhost', 65436))
+    print("Received Weather Info: " + s.recv(1024).decode())
+    s.close()
 
 # Example usage
 tcp_client()

@@ -7,7 +7,7 @@ def tcp_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(('localhost', 65432))
     server_socket.listen(5)  # Allow up to 5 pending connections
-    print("TCP Server is listening...")
+    print("TCP Server is waiting")
     
     while True:
         client_socket, client_address = server_socket.accept()
@@ -16,12 +16,12 @@ def tcp_server():
         data = client_socket.recv(1024)
         if data:
             print(f"Received: {data.decode()}")
-            client_socket.sendall(b"ACK: " + data)
+            client_socket.sendall(data)
             
             # Logging received data to a file
             with open('received_data.txt', 'a') as f:
                 f.write(f"{datetime.datetime.now()} - {client_address}: {data.decode()}\n")
-                print("Data logged successfully.")
+                print("Data logged.")
             
         client_socket.close()
 

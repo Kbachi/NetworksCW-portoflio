@@ -2,39 +2,48 @@ import socket
 import base64
 
 # Dictionary to store username-password pairs and track IP addresses
-user_credentials = {"user1": "password1", "user2": "password2"}
-user_ips = {}
+credentials = {"user1": "password1", "user2": "password2"}
+ips = {}
 
 # Function to decode Base64 message
 def decode_message(encoded_message):
-    return base64.b64decode(encoded_message).decode()
+    try:
+        return base64.b64decode(encoded_message).decode()
+    except Exception as e:
+        print(f"Decoding error: {e}")
+        return ""
 
 # UDP Server - Receive Data with Authentication and IP Tracking
 def udp_server():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.bind(('localhost', 65433))
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind(('localhost', 65433))
     print("UDP Server is ready to receive data...")
     
     while True:
-        data, client_address = server_socket.recvfrom(2048)
-        decoded_data = decode_message(data)
+        d, addr = s.recvfrom(2048)
+        decoded = decode_message(d)
         
         # Check if it is an authentication attempt
-        if decoded_data.startswith("AUTH:"):
-            _, username, password = decoded_data.split(":")
-            if username in user_credentials and user_credentials[username] == password:
-                user_ips[client_address[0]] = username  # Store IP and associated username
-                server_socket.sendto("AUTH_SUCCESS".encode(), client_address)
-                print(f"User {username} authenticated from {client_address[0]}")
+        if "AUTH:" in decoded:
+            parts = decoded.split(":")
+            if len(parts) == 3:
+                username, password = parts[1], parts[2]
+                if username in credentials and credentials[username] == password:
+                    ips[addr[0]] = username  # Store IP and associated username
+                    s.sendto("AUTH_SUCCESS".encode(), addr)
+                    print(f"User {username} authenticated from {addr[0]}")
+                else:
+                    s.sendto("AUTH_FAILED".encode(), addr)
+                    print(f"Failed authentication attempt from {addr[0]}")
             else:
-                server_socket.sendto("AUTH_FAILED".encode(), client_address)
-                print(f"Failed authentication attempt from {client_address[0]}")
+                s.sendto("AUTH_FAILED".encode(), addr)
+                print(f"Malformed authentication attempt from {addr[0]}")
         else:
             # Ensure sender is authenticated before processing messages
-            if client_address[0] in user_ips:
-                print(f"Received from {user_ips[client_address[0]]} ({client_address[0]}): {decoded_data}")
+            if addr[0] in ips:
+                print(f"Received from {ips[addr[0]]} ({addr[0]}): {decoded}")
             else:
-                print(f"Unauthorised message received from {client_address[0]}")
-                server_socket.sendto("AUTH_REQUIRED".encode(), client_address)
+                print(f"Unauthorised message received from {addr[0]}")
+                s.sendto("AUTH_REQUIRED".encode(), addr)
 
 udp_server()
